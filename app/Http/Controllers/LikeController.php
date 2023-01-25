@@ -3,10 +3,46 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Address;
+use App\Models\Post;
+use App\Models\Like;
 use DB;
-class AuxController extends Controller
+class LikeController extends Controller
 {
+    // like or unlike
+    public function likeOrUnlike($id)
+    {
+        $post = Post::find($id);
+
+        if(!$post)
+        {
+            return response([
+                'message' => 'Post not found.'
+            ], 403);
+        }
+
+        $like = $post->likes()->where('user_id', auth()->user()->id)->first();
+
+        // if not liked then like
+        if(!$like)
+        {
+            Like::create([
+                'post_id' => $id,
+                'user_id' => auth()->user()->id
+            ]);
+
+            return response([
+                'message' => 'Liked'
+            ], 200);
+        }
+        // else dislike it
+        $like->delete();
+
+        return response([
+            'message' => 'Disliked'
+        ], 200);
+    }
+
+
     public function estados(Request $request)
     {
         $estados = DB::table("cat_estados")->select("idestado","estado")->get();
@@ -30,13 +66,18 @@ class AuxController extends Controller
     {   
 
         $data = [];
+        $iduser = DB::table("users")
+        ->select("id")
+        ->where("email", $request->email)
+        ->get();
         $data = DB::table("address")
             ->select("idaddress")
-            ->where("iduser", $request->userId)
+            ->where("iduser", $iduser[0]->id)
             ->get();
+
         if ($data == "[]") {
             DB::table("address")->insert([
-                "iduser" => $request->userId,
+                "iduser" => $request->iduser,
                 "idmunicipio" => $request->city,
                 "idestado" => $request->state,
                 "cp" => $request->cp,
@@ -49,12 +90,11 @@ class AuxController extends Controller
             ]);
         } else {
             try {
-
                 $update = Address::where(
                     "idaddress",
                     $data[0]->idaddress
                 )->update([
-                    "iduser" => $request->userId,
+                    "iduser" => $iduser[0]->id,
                     "idmunicipio" => $request->city,
                     "idestado" => $request->state,
                     "cp" => $request->cp,
@@ -75,15 +115,18 @@ class AuxController extends Controller
 
     public function getaddress(Request $request)
     {
+        
+        $iduser = DB::table("users")
+        ->select("id")
+        ->where("email", $request->email)
+        ->get();
 
         $data = DB::table("address as a")
-            ->select("a.cp","a.calle","a.numero","a.colonia","m.municipio","e.estado")
+            ->select("a.calle","a.numero","a.colonia","m.municipio","e.estado")
             ->leftjoin('cat_municipios as m','a.idmunicipio','=','m.idmunicipio')
             ->leftjoin('cat_estados as e','a.idestado','=','e.idestado')
-            ->where("iduser", $request->userId)
+            ->where("iduser", $iduser[0]->id)
             ->get();
-            return response([
-                'address' => $data[0]
-            ], 200);
+        return $data;
     }
 }
