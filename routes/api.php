@@ -26,6 +26,7 @@ Route::get('/estados', [AuxController::class, 'estados']);
 Route::get('/municipios', [AuxController::class, 'municipios']);
 Route::get('/cps', [AuxController::class, 'cps']);
 Route::post('/address', [AuxController::class, 'getaddress']);
+Route::post('/addressbycp', [AuxController::class, 'getaddressbycp']);
 Route::post('/insertupdateaddress', [AuxController::class, 'insertupdateaddress']);
 
 // Protected Routes

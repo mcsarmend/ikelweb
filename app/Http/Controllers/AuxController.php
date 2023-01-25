@@ -86,4 +86,17 @@ class AuxController extends Controller
                 'address' => $data[0]
             ], 200);
     }
+    public function getaddressbycp(Request $request)
+    {   
+
+        $data = DB::table("cat_cps as cps")
+            ->select("cps.cp","cps.colonia","m.municipio","e.estado","m.idmunicipio","e.idestado")
+            ->leftjoin('cat_municipios as m','m.idmunicipio', '=','cps.idmunicipio')
+            ->leftjoin('cat_estados as e','cps.idestado','=','e.idestado')
+            ->where("cps.cp", $request->cp)
+            ->get();
+            return response([
+                'address' => $data[0]
+            ], 200);
+    }
 }
