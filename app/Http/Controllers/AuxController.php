@@ -49,7 +49,6 @@ class AuxController extends Controller
             ]);
         } else {
             try {
-
                 $update = Address::where(
                     "idaddress",
                     $data[0]->idaddress
@@ -75,16 +74,28 @@ class AuxController extends Controller
 
     public function getaddress(Request $request)
     {
-
-        $data = DB::table("address as a")
-            ->select("a.cp","a.calle","a.numero","a.colonia","m.municipio","e.estado")
-            ->leftjoin('cat_municipios as m','a.idmunicipio','=','m.idmunicipio')
-            ->leftjoin('cat_estados as e','a.idestado','=','e.idestado')
+        $data = [];
+        $data = DB::table("address")
+            ->select("idaddress")
             ->where("iduser", $request->userId)
             ->get();
-            return response([
-                'address' => $data[0]
-            ], 200);
+            if ($data=='[]') {
+                $error = "Sin dirección registrada";
+                return response([
+                    'error' => $error
+                ], 422);
+            }else {
+                $data = DB::table("address as a")
+                ->select("a.cp","a.calle","a.numero","a.colonia","m.municipio","e.estado")
+                ->leftjoin('cat_municipios as m','a.idmunicipio','=','m.idmunicipio')
+                ->leftjoin('cat_estados as e','a.idestado','=','e.idestado')
+                ->where("iduser", $request->userId)
+                ->get();
+                return response([
+                    'address' => $data[0]
+                ], 200);
+            }
+        
     }
     public function getaddressbycp(Request $request)
     {   
