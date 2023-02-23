@@ -110,4 +110,36 @@ class AuxController extends Controller
                 'address' => $data[0]
             ], 200);
     }
+    public function getorders(Request $request){   
+        $data = DB::table("assignations as a")
+            ->select("o.internal_id","o.order_description","o.cost","o.lat_destiny","o.lon_destiny","a.status")
+            ->leftjoin('orders as o','a.order_id', '=','o.id')
+            ->where("a.user_id", $request->user_id)
+            ->get();
+            return response([
+                'orders' => $data[0]
+            ], 200);
+    }
+    public function setorders(Request $request){   
+    
+            try {
+                DB::table("orders")->insert([
+                    "internal_id" => $request->internal_id,
+                    "client_name" => $request->client_name,
+                    "client_number" => $request->client_number,
+                    "order_description" => $request->order_description,
+                    "cost" => $request->cost,
+                    "lat_destiny" => $request->lat_destiny,
+                    "lon_destiny" => $request->lon_destiny
+                ]);
+                return response()->json([
+                    "success" => "Se guardó el cliente correctamente!",
+                ]);
+            }  catch (\Throwable $th) {
+                return $th;
+                $error = "No se pudo guardar la dirección";
+                return response()->json(["success" => $error]);
+            }
+
+    }
 }

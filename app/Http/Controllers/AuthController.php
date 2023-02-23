@@ -9,19 +9,25 @@ use App\Models\User;
 class AuthController extends Controller
 {
     //Register user
-    public function register(Request $request)
-    {
+    public function register(Request $request){
+
         //validate fields
         $attrs = $request->validate([
             'name' => 'required|string',
             'email' => 'required|email|unique:users,email',
+            'number' => 'required|string',
+            'pass' => 'required|string',
+            'type' => 'required|string',
             'password' => 'required|min:6|confirmed'
         ]);
-
+        
         //create user
         $user = User::create([
             'name' => $attrs['name'],
             'email' => $attrs['email'],
+            'number' => $attrs['number'],
+            'pass' => $attrs['pass'],
+            'type' => $attrs['type'],
             'password' => bcrypt($attrs['password'])
         ]);
 
@@ -78,7 +84,9 @@ class AuthController extends Controller
     {
         $attrs = $request->validate([
             'name' => 'required|string',
-            'email' => 'required|string'
+            'email' => 'required|string',
+            'image' => 'required|string',
+            'number' => 'required|string'
         ]);
 
         $image = $this->saveImage($request->image, 'profiles');
@@ -86,6 +94,7 @@ class AuthController extends Controller
         auth()->user()->update([
             'name' => $attrs['name'],
             'email' => $attrs['email'],
+            'number' => $attrs['number'],
             'image' => $image
         ]);
 
