@@ -1,29 +1,165 @@
 <?php
 
-namespace App\Models;
+namespace App\Http\Controllers;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Address extends Model
+use Illuminate\Http\Request;
+use App\Models\Address;
+use DB;
+class AuxController extends Controller
 {
-    use HasFactory;
-    protected $table = 'address';
+    public function estados(Request $request)
+    {
+        $estados = DB::table("cat_estados")->select("idestado","estado")->get();
+        return $estados;
+    }
+    public function municipios(Request $request)
+    {
+        $estados = DB::table("cat_municipios")->select("idmunicipio","municipio")
+        ->where("idestado",$request->idestado)
+        ->get();
+        return $estados;
+    }
+    public function cps(Request $request){
+        $cps = DB::table("cat_cps")->select("idcp","cp","colonia")
+        ->where("idmunicipio",$request->idmunicipio)
+        ->get();
+        return $cps;
+    }
 
-	protected $primary_key = 'idaddress';
+    public function insertupdateaddress(Request $request)
+    {   
 
-	public $timestamps = false;
+        $data = [];
+        $data = DB::table("address")
+            ->select("idaddress")
+            ->where("iduser", $request->userId)
+            ->get();
+        if ($data == "[]") {
+            DB::table("address")->insert([
+                "iduser" => $request->userId,
+                "idmunicipio" => $request->city,
+                "idestado" => $request->state,
+                "cp" => $request->cp,
+                "colonia" => $request->suburb,
+                "calle" => $request->street,
+                "numero" => $request->number
+            ]);
+            return response()->json([
+                "success" => "Se guardó el cliente correctamente!",
+            ]);
+        } else {
+            try {
+                $update = Address::where(
+                    "idaddress",
+                    $data[0]->idaddress
+                )->update([
+                    "iduser" => $request->userId,
+                    "idmunicipio" => $request->city,
+                    "idestado" => $request->state,
+                    "cp" => $request->cp,
+                    "colonia" => $request->suburb,
+                    "calle" => $request->street,
+                    "numero" => $request->number
+                ]);
+                return response()->json([
+                    "success" => "Se actualizó el cliente correctamente!",
+                ]);
+            } catch (\Throwable $th) {
+                return $th;
+                $error = "No se pudo guardar la dirección";
+                return response()->json(["success" => $error]);
+            }
+        }
+    }
 
-	protected $fillable = [
-		'idaddress',
-        'iduser',
-        'idmunicipio',
-        'idestado',
-        'cp',
-        'colonia',
-        'calle',
-        'numero',
-	];
+    public function getaddress(Request $request)
+    {
+        $data = [];
+        $data = DB::table("address")
+            ->select("idaddress")
+            ->where("iduser", $request->userId)
+            ->get();
+            if ($data=='[]') {
+                $error = "Sin dirección registrada";
+                return response([
+                    'error' => $error
+                ], 422);
+            }else {
+                $data = DB::table("address as a")
+                ->select("a.cp","a.calle","a.numero","a.colonia","m.municipio","e.estado")
+                ->leftjoin('cat_municipios as m','a.idmunicipio','=','m.idmunicipio')
+                ->leftjoin('cat_estados as e','a.idestado','=','e.idestado')
+                ->where("iduser", $request->userId)
+                ->get();
+                return response([
+                    'address' => $data[0]
+                ], 200);
+            }
+        
+    }
+    public function getaddressbycp(Request $request)
+    {   
 
-	protected $guarded =[];
+        $data = DB::table("cat_cps as cps")
+            ->select("cps.cp","cps.colonia","m.municipio","e.estado","m.idmunicipio","e.idestado")
+            ->leftjoin('cat_municipios as m','m.idmunicipio', '=','cps.idmunicipio')
+            ->leftjoin('cat_estados as e','cps.idestado','=','e.idestado')
+            ->where("cps.cp", $request->cp)
+            ->get();
+            return response([
+                'address' => $data[0]
+            ], 200);
+    }
+    public function getorders(Request $request){   
+        $data = DB::table("assignations as a")
+            ->select("o.internal_id","o.order_description","o.cost","o.lat_destiny","o.lon_destiny","a.status")
+            ->leftjoin('orders as o','a.order_id', '=','o.id')
+            ->where("a.user_id", $request->user_id)
+            ->get();
+            return response([
+                'orders' => $data
+            ], 200);
+    }
+    public function setorders(Request $request){   
+	$order_id = 0;
+            try {
+            	DB::table("orders")->insert([
+                    "internal_id" => $request->internal_id,
+                    "client_name" => $request->client_name,
+                    "client_number" => $request->client_number,
+                    "order_description" => $request->order_description,
+                    "cost" => $request->cost,
+                    "lat_destiny" => $request->lat_destiny,
+                    "lon_destiny" => $request->lon_destiny
+                ]);
+                
+                $order_id = DB::table("orders as o")
+	            ->select("o.id")
+	            ->where("o.client_number", $request->client_number)
+	            ->orderBy('o.id', 'desc')
+	            ->get();
+		$array = json_decode($order_id , true);
+		$id= $array[0]['id'];
+                
+                 DB::table("assignations")->insert([
+                    "user_id" => $request->client_number,
+                    "order_id" => $id,
+                    "status" => 0
+                ]);
+                
+                
+                return response()->json([
+                    "success" => "Se guardó la orden correctamente!",
+                ]);
+            }  catch (\Throwable $th) {
+                return $th;
+                $error = "No se pudo la orden";
+                return response()->json(["success" => $error]);
+            }
+
+    }
+    
+    public function orderasignation(Request $request){   
+	    return "Hola";
+    }
 }

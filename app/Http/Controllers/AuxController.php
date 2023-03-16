@@ -121,8 +121,10 @@ class AuxController extends Controller
             ], 200);
     }
     public function setorders(Request $request){   
-    
+    $order = [];
             try {
+
+                
                 DB::table("orders")->insert([
                     "internal_id" => $request->internal_id,
                     "client_name" => $request->client_name,
@@ -132,14 +134,36 @@ class AuxController extends Controller
                     "lat_destiny" => $request->lat_destiny,
                     "lon_destiny" => $request->lon_destiny
                 ]);
+                $order = DB::table("orders")
+                ->select("id")
+                ->where("client_number", $request->client_number)
+                ->orderBy('id', 'desc')
+                ->get();
+                $array = json_decode($order, true);
+                $id = $array[0];
+                DB::table("assignations")->insert([
+                    "user_id" => $request->client_number,
+                    "order_id" => $id['id'],
+                    "status" => "0",
+                ]);
+                
                 return response()->json([
-                    "success" => "Se guardó el cliente correctamente!",
+                    "success" => "Se guardo la orden correctamente",
                 ]);
             }  catch (\Throwable $th) {
                 return $th;
-                $error = "No se pudo guardar la dirección";
+                $error = "No se pudo guardar la orden";
                 return response()->json(["success" => $error]);
             }
 
+    }
+    public function aux1(Request $request){   
+        return "Hola1";
+    }
+    public function aux2(Request $request){   
+        return "Hola2";
+    }
+    public function aux3(Request $request){   
+        return "Hola3";
     }
 }

@@ -27,6 +27,10 @@ Route::post('/addressbycp', [AuxController::class, 'getaddressbycp']);
 Route::post('/insertupdateaddress', [AuxController::class, 'insertupdateaddress']);
 Route::post('/getorders', [AuxController::class, 'getorders']);
 Route::post('/setorders', [AuxController::class, 'setorders']);
+Route::post('/getordersdelivery', [AuxController::class, 'getordersdelivery']);
+Route::post('/aux1', [AuxController::class, 'aux1']);
+Route::post('/aux2', [AuxController::class, 'aux2']);
+Route::post('/aux3', [AuxController::class, 'aux3']);
 
 
 
