@@ -27,7 +27,7 @@ class AuxController extends Controller
     }
 
     public function insertupdateaddress(Request $request)
-    {   
+    {
 
         $data = [];
         $data = DB::table("address")
@@ -95,10 +95,10 @@ class AuxController extends Controller
                     'address' => $data[0]
                 ], 200);
             }
-        
+
     }
     public function getaddressbycp(Request $request)
-    {   
+    {
 
         $data = DB::table("cat_cps as cps")
             ->select("cps.cp","cps.colonia","m.municipio","e.estado","m.idmunicipio","e.idestado")
@@ -110,60 +110,167 @@ class AuxController extends Controller
                 'address' => $data[0]
             ], 200);
     }
-    public function getorders(Request $request){   
+    public function getorders(Request $request){
         $data = DB::table("assignations as a")
             ->select("o.internal_id","o.order_description","o.cost","o.lat_destiny","o.lon_destiny","a.status")
             ->leftjoin('orders as o','a.order_id', '=','o.id')
             ->where("a.user_id", $request->user_id)
             ->get();
-            return response([
-                'orders' => $data[0]
-            ], 200);
+        return response([
+            'orders' => $data
+        ], 200);
     }
-    public function setorders(Request $request){   
-    $order = [];
-            try {
+    public function setorders(Request $request){
+        $order = [];
+        $delivery=[];
+        define('i', 0);
+        try {
+            // Insertar orden
+            DB::table("orders")->insert([
+                "internal_id" => $request->internal_id,
+                "client_name" => $request->client_name,
+                "client_number" => $request->client_number,
+                "order_description" => $request->order_description,
+                "cost" => $request->cost,
+                "lat_destiny" => $request->lat_destiny,
+                "lon_destiny" => $request->lon_destiny
+            ]);
+                            // Obtener el ID
+            $order = DB::table("orders")
+            ->select("id")
+            ->where("client_number", $request->client_number)
+            ->orderBy('id', 'desc')
+            ->get();
+            $array = json_decode($order, true);
+            $id = $array[0];
 
-                
-                DB::table("orders")->insert([
-                    "internal_id" => $request->internal_id,
-                    "client_name" => $request->client_name,
-                    "client_number" => $request->client_number,
-                    "order_description" => $request->order_description,
-                    "cost" => $request->cost,
-                    "lat_destiny" => $request->lat_destiny,
-                    "lon_destiny" => $request->lon_destiny
-                ]);
-                $order = DB::table("orders")
-                ->select("id")
-                ->where("client_number", $request->client_number)
-                ->orderBy('id', 'desc')
-                ->get();
-                $array = json_decode($order, true);
-                $id = $array[0];
+
+
+            // validar conductores disponibles
+            $delivery = DB::table("disponibility")
+            ->select("user_id","active")
+            ->get();
+            $array = json_decode($delivery, true);
+            $longitud = count($array);
+            $del = 0;
+            $t = 10;
+            foreach ($array as $element) {
+                if($element["active"] == 0){
+                        $del = $element["user_id"];
+                        break;
+                    }
+            }
+
+
+            if($del!=0){
+                // Insertar en las asignaciones
                 DB::table("assignations")->insert([
                     "user_id" => $request->client_number,
                     "order_id" => $id['id'],
                     "status" => "0",
                 ]);
-                
-                return response()->json([
-                    "success" => "Se guardo la orden correctamente",
+                // Cambiar estatus del conductor
+                DB::update('UPDATE disponibility SET active = ? WHERE user_id = ?', [1, $del]);
+                DB::update('UPDATE disponibility SET inprogress= ? WHERE user_id = ?', [1,0]);
+
+                // asignar el conductor a la orden
+                DB::update('UPDATE assignations SET delivery = ? WHERE order_id = ?', [$del, $id['id']]);
+
+                // Cambiar el estatus de la orden
+                DB::update('UPDATE assignations SET status = ? WHERE order_id = ?', [1, $id['id']]);
+
+            }else{
+                // Insertar en las asignaciones
+                DB::table("assignations")->insert([
+                    "user_id" => $request->client_number,
+                    "order_id" => $id['id'],
+                    "status" => "2",
                 ]);
-            }  catch (\Throwable $th) {
-                return $th;
-                $error = "No se pudo guardar la orden";
-                return response()->json(["success" => $error]);
             }
+            return response()->json([
+                "success" => "Se guardo la orden correctamente",
+            ]);
+        }  catch (\Throwable $th) {
+            return $th;
+            $error = "No se pudo guardar la orden";
+            return response()->json(["success" => $error]);
+        }
 
     }
-    public function aux1(Request $request){   
+    public function aux1(Request $request){
+
+	    $data = DB::table("assignations as a")
+            ->select("o.internal_id","o.order_description","o.cost","o.lat_destiny","o.lon_destiny","a.status","u.number","d.inprogress")
+            ->leftjoin('orders as o','a.order_id', '=','o.id')
+            ->leftjoin('users as u','u.id','o.client_number')
+            ->leftjoin('disponibility as d','d.user_id','a.delivery')
+            ->where("a.delivery", $request->user_id)
+            ->where('a.status', 1)
+            ->get();
+            return response([
+                'orders' => $data
+            ], 200);
+
         return "Hola1";
     }
-    public function aux2(Request $request){   
-        return "Hola2";
+    public function aux2(Request $request){
+
+        try {
+	 	    // Cambiar del progreso
+	    	DB::update('UPDATE disponibility SET inprogress= ? WHERE user_id = ?', [ $request->status,  $request->user_id]);
+	    	// Cambiar el estatus de la orden
+            DB::update('UPDATE assignations SET status = ? WHERE status = ? and delivery = ?' , [$request->orderstatus, $request->status, $request->user_id]);
+                // Cambiar el estatus del conductor
+            DB::update('UPDATE disponibility SET active= ? WHERE user_id = ?', [ $request->status,  $request->user_id]);
+            return response()->json([
+	            "success" => "Se actualizaron correctamente",
+	        ]);
+        }  catch (\Throwable $th) {
+            return $th;
+            $error = "No se pudo actualizar pedidos";
+            return response()->json(["success" => $error]);
+        }
+
     }
-    public function aux3(Request $request){   
-        return "Hola3";
+    public function aux3(Request $request){
+        try {
+	 	    // Cambiar del progreso
+	    	DB::update('UPDATE disponibility SET inprogress= ? WHERE user_id = ?', [ $request->status,  $request->user_id]);
+	    	// Cambiar el estatus de la orden
+		    DB::update('UPDATE assignations SET status = ? WHERE status = ? and delivery = ?' , [$request->orderstatus, 1, $request->user_id]);
+	        // Cambiar el estatus del conductor
+		    DB::update('UPDATE disponibility SET active= ? WHERE user_id = ?', [ $request->status,  $request->user_id]);
+
+            // Verifica si hay pedidos en cola
+            $order = DB::table("assignations")
+            ->select("order_id")
+            ->where("status",2)
+            ->orderBy('id', 'desc')
+            ->get();
+
+            $array = json_decode($order, true);
+            $id = $array[0]["order_id"];
+
+
+	        if(count($array) >0){
+	        // Cambiar estatus del conductor
+                DB::update('UPDATE disponibility SET active = ? WHERE user_id = ?', [1, $request->user_id]);
+                DB::update('UPDATE disponibility SET inprogress= ? WHERE user_id = ?', [1,0]);
+
+                // asignar el conductor a la orden
+                DB::update('UPDATE assignations SET delivery = ? WHERE order_id = ?', [$request->user_id, $id]);
+
+                // Cambiar el estatus de la orden
+                DB::update('UPDATE assignations SET status = ? WHERE order_id = ?', [1, $id]);
+	        }
+
+	        return response()->json([
+	            "success" => "Se actualizaron correctamente",
+	        ]);
+        }  catch (\Throwable $th) {
+                return $th;
+                $error = "No se pudo actualizar pedidos";
+                return response()->json(["success" => $error]);
+        }
     }
 }
