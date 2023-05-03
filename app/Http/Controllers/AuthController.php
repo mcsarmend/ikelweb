@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-
+use DB;
 class AuthController extends Controller
 {
     //Register user
@@ -20,7 +20,7 @@ class AuthController extends Controller
             'type' => 'required|string',
             'password' => 'required|min:6|confirmed'
         ]);
-        
+
         //create user
         $user = User::create([
             'name' => $attrs['name'],
@@ -90,7 +90,7 @@ class AuthController extends Controller
         ]);
 
         $image = $this->saveImage($request->image, 'profiles');
-        
+
         auth()->user()->update([
             'name' => $attrs['name'],
             'email' => $attrs['email'],
@@ -102,6 +102,22 @@ class AuthController extends Controller
             'message' => 'User updated.',
             'user' => auth()->user()
         ], 200);
+    }
+
+
+    public function drop(Request $request)
+    {
+        try {
+               // eliminar cuenta
+               DB::table('users')->where('id', $request->id)->delete();
+           return response()->json([
+                "success" => "Registro eliminado correctamente",
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                "error" => "No se pudo eliminar el registro:". $e->getMessage(),
+            ]);
+        }
     }
 
 }
