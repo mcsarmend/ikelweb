@@ -7,6 +7,7 @@
 @stop
 
 @section('content')
+    <h1>Percances</h1>
     <div>
         Dashboard
     </div>

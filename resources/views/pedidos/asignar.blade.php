@@ -7,6 +7,7 @@
 @stop
 
 @section('content')
+    <h1>Pedidos por asignar</h1>
     <div>
         Dashboard
     </div>

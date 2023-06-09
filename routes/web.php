@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\pedidosController;
+use App\Http\Controllers\historicoController;
+use App\Http\Controllers\repartidoresController;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,6 +15,36 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect('/home')->middleware('auth');
+    } else {
+        return redirect('/login');
+    }
+})->middleware('auth');
+
+
+
+// pedidos
+
+Route::get('pedidos/proceso', [pedidosController::class, 'proceso'])->middleware('auth');
+Route::get('pedidos/asignar', [pedidosController::class, 'asignar'])->middleware('auth');
+Route::get('pedidos/ruta', [pedidosController::class, 'ruta'])->middleware('auth');
+Route::get('pedidos/percances', [pedidosController::class, 'percances'])->middleware('auth');
+
+
+
+// historico
+Route::get('historico', [historicoController::class, 'historico'])->middleware('auth');
+Route::get('gethistoricorders', [historicoController::class, 'gethistoricorders']);
+
+//Repartidores
+Route::get('repartidores', [repartidoresController::class, 'repartidores'])->middleware('auth');
+Route::get('repartidoresname', [repartidoresController::class, 'repartidoresname']);
+
+
+
 
 Route::get('/', function () {
     return view('welcome');
