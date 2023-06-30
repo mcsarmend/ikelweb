@@ -298,10 +298,6 @@ return [
             'icon' => 'fas fa-fw fa-square',
             'submenu' => [
                 [
-                    'text' => 'Pedidos en proceso',
-                    'url' => 'pedidos/proceso'
-                ],
-                [
                     'text' => 'Por asignar',
                     'url' => 'pedidos/asignar'
                 ],
@@ -408,12 +404,12 @@ return [
             ],
         ],
         'Sweetalert2' => [
-            'active' => false,
+            'active' => true,
             'files' => [
                 [
                     'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8',
+                    'asset' => true,
+                    'location' => 'https://cdn.jsdelivr.net/npm/sweetalert2@11',
                 ],
             ],
         ],

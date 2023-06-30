@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Address;
 use DB;
+use Carbon\Carbon;
 class AuxController extends Controller
 {
     public function estados(Request $request)
@@ -121,6 +122,7 @@ class AuxController extends Controller
         ], 200);
     }
     public function setorders(Request $request){
+        $fechaActual = Carbon::now();
         $order = [];
         $delivery=[];
         define('i', 0);
@@ -133,7 +135,8 @@ class AuxController extends Controller
                 "order_description" => $request->order_description,
                 "cost" => $request->cost,
                 "lat_destiny" => $request->lat_destiny,
-                "lon_destiny" => $request->lon_destiny
+                "lon_destiny" => $request->lon_destiny,
+                "created_at" =>$fechaActual
             ]);
                             // Obtener el ID
             $order = DB::table("orders")

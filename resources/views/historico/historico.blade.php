@@ -72,9 +72,10 @@
                     var contacto = $('<div style = "color:#6da6cb">').text('Contacto: ' + pedido.numero + " " + pedido.cliente);
                     // var valida = $('<div style = "color:#6da6cb">').text('Valida: ' + pedido.valida);
                     var repartidor = $('<div style = "color:#78a729">').text('Repartidor: ' + pedido.repartidor);
-                    var button = $('<button>').addClass('btn btn-primary').text('Aceptar');
+                    // var button = $('<button>').addClass('btn btn-primary').text('Aceptar');
 
-                    info.append(pedidoInfo, button);
+                    // info.append(pedidoInfo, button);
+                    info.append(pedidoInfo);
                     listItem.append(info, fechaHora, direccion, contacto,  repartidor);
                     $('#pedido-list').append(listItem);
                 });

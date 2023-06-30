@@ -32,12 +32,17 @@ Route::get('pedidos/proceso', [pedidosController::class, 'proceso'])->middleware
 Route::get('pedidos/asignar', [pedidosController::class, 'asignar'])->middleware('auth');
 Route::get('pedidos/ruta', [pedidosController::class, 'ruta'])->middleware('auth');
 Route::get('pedidos/percances', [pedidosController::class, 'percances'])->middleware('auth');
-
+Route::get('pedidos/getpedidosasignar', [pedidosController::class, 'getpedidosasignar']);
+Route::get('pedidos/getpedidosruta', [pedidosController::class, 'getpedidosruta']);
+Route::get('pedidos/repartidoresname', [pedidosController::class, 'repartidoresname']);
+Route::get('pedidos/getpedidospercances', [pedidosController::class, 'getpedidospercances']);
+Route::get('pedidos/vernota', [pedidosController::class, 'vernota']);
 
 
 // historico
 Route::get('historico', [historicoController::class, 'historico'])->middleware('auth');
 Route::get('gethistoricorders', [historicoController::class, 'gethistoricorders']);
+Route::get('getpedidosasignar', [historicoController::class, 'gethistoricorders']);
 
 //Repartidores
 Route::get('repartidores', [repartidoresController::class, 'repartidores'])->middleware('auth');
