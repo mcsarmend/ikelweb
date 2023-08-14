@@ -78,14 +78,12 @@ class pedidosController extends Controller
 
             $order = strval($request->pedido);
             $data = DB::table('binnacle')
-            ->select('note')
-            ->where('order_id', $order)
-            ->get();
+                ->select('note')
+                ->where('order_id', $order)
+                ->get();
             return $data;
 
-
-        }
-        catch (\Throwable $th) {
+        } catch (\Throwable $th) {
             return $th;
         };
 
@@ -107,4 +105,51 @@ class pedidosController extends Controller
         }
         return $data;
     }
+    public function asignarrepartidor(Request $request)
+    {
+        $delivery = DB::table("disponibility")
+        ->select("user_id","active")
+        ->get();
+        $array = json_decode($delivery, true);
+        $longitud = count($array);
+        $del = 0;
+        $t = 10;
+        foreach ($array as $element) {
+            if($element["active"] == 0){
+                    $del = $element["user_id"];
+                    break;
+                }
+        }
+        if($del!=0){
+            // Insertar en las asignaciones
+            DB::table("assignations")->insert([
+                "user_id" => $request->client_number,
+                "order_id" => $id['id'],
+                "status" => "0",
+            ]);
+            // Cambiar estatus del conductor
+            DB::update('UPDATE disponibility SET active = ? WHERE user_id = ?', [1, $del]);
+            DB::update('UPDATE disponibility SET inprogress= ? WHERE user_id = ?', [1,0]);
+
+            // asignar el conductor a la orden
+            DB::update('UPDATE assignations SET delivery = ? WHERE order_id = ?', [$del, $id['id']]);
+
+            // Cambiar el estatus de la orden
+            DB::update('UPDATE assignations SET status = ? WHERE order_id = ?', [1, $id['id']]);
+
+        }else{
+            // Insertar en las asignaciones
+            DB::table("assignations")->insert([
+                "user_id" => $request->client_number,
+                "order_id" => $id['id'],
+                "status" => "2",
+            ]);
+        }
+    }
+    public function aux1(Request $request)
+    {}
+    public function aux2(Request $request)
+    {}
+    public function aux3(Request $request)
+    {}
 }

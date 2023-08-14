@@ -1,13 +1,13 @@
 @extends('adminlte::page')
 
-@section('title', 'Dashboard')
+@section('title', 'Asignar (Cocina)')
 
 @section('content_header')
 
 @stop
 
 @section('content')
-    <h1>Pedidos por asignar</h1>
+    <h1>Pedidos por asignar (cocina)</h1>
     <div class="container">
         <h2>Lista de Pedidos</h2>
 
@@ -73,11 +73,12 @@
                     var contacto = $('<div style = "color:#6da6cb">').text('Contacto: ' + pedido.numero +
                         " " + pedido.cliente);
                     // var valida = $('<div style = "color:#6da6cb">').text('Valida: ' + pedido.valida);
-                    var button = $('<button onClick="asignarRepartidor(' + pedido.pedido + ')">').addClass(
-                        'btn btn-primary').text('Asignar');
+                    var button = $('<button onClick="asignarRepartidor(\'' + pedido.pedido + '\')">')
+                        .addClass('btn btn-primary').text('Asignar');
+                    var button2 = $('<button onClick="verDetalle(\'' + pedido.descripcion + '\', \'' +
+                        pedido.pedido + '\')">').addClass('btn btn-info').text('Ver detalle');
 
-
-                    info.append(pedidoInfo, button);
+                    info.append(pedidoInfo, button2, button);
                     listItem.append(info, fechaHora, direccion, contacto);
                     $('#pedido-list').append(listItem);
                 });
@@ -94,6 +95,13 @@
             });
         });
 
+        function verDetalle(detalle, numero_pedido) {
+            Swal.fire({
+                title: 'Detalle del Pedido #' + numero_pedido,
+                html: '<p>' + detalle + '</p>',
+                confirmButtonText: 'Cerrar'
+            });
+        }
 
         function asignarRepartidor(pedido) {
             // Realizar la consulta AJAX al backend para obtener la lista de nombres
@@ -107,13 +115,15 @@
 
                     var info = $('<div>').addClass('d-flex justify-content-between align-items-center');
                     response.forEach(function(element) {
-                        var info = $('<div>').addClass('d-flex justify-content-between align-items-center');
+                        var info = $('<div>').addClass(
+                            'd-flex justify-content-between align-items-center');
                         var listItem = $('<li>').addClass('list-group-item');
                         var repartidor = $('<div style = "color:#78a729">').text('Repartidor: ' +
                             element.name);
-                        var button = $('<button onClick="asignar(' + element.id + ')">')
+                        var button = $('<button onClick="asignar(\'' + element.id + '\', \'' + pedido +
+                                '\', \'' + element.name + '\')">')
                             .addClass('btn btn-primary').text('Asignar');
-                        info.append(repartidor,button);
+                        info.append(repartidor, button);
                         listItem.append(info);
                         namesList.append(listItem);
                     });
@@ -126,7 +136,7 @@
                         showCancelButton: true,
                         cancelButtonText: 'Cancelar',
                         showLoaderOnConfirm: false,
-                        showConfirmButton:false,
+                        showConfirmButton: false,
                         preConfirm: function() {
                             // Lógica para realizar la asignación
                             // Puedes hacer otra llamada AJAX aquí o ejecutar cualquier otra acción necesaria
@@ -154,9 +164,46 @@
         }
 
 
-        function asignar(id) {
-            console.log(id);
-        }
+        function asignar(id, pedido, nombre) {
 
+
+            mensajeHTML = 'Se asignará la orden ' + pedido + ' al repartidor ' + nombre;
+            // Mostrar el pop-up de SweetAlert2
+            Swal.fire({
+                title: 'Confirmar asignación',
+                html: mensajeHTML,
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar',
+                showLoaderOnConfirm: false,
+                showConfirmButton: true,
+                confirmButtonText: "Asignar"
+                preConfirm: function() {
+
+                    $.ajax({
+                        url: 'asignarrepartidorback', // Ruta al backend que devuelve la lista de nombres
+                        method: 'GET',
+                        dataType: 'json',
+                        success: function(response) {
+                            console.log(response);
+                        }
+                    });
+
+
+
+                    console.log("Se asigno");
+                },
+                allowOutsideClick: false
+            }) then(function(result) {
+                // Si el botón "Asignar" fue clicado
+                if (result.isConfirmed) {
+                    // Aquí puedes mostrar el mensaje de éxito
+                    Swal.fire('Asignación Exitosa', 'La asignación se realizó correctamente.',
+                        'success');
+                }
+            }).catch(function(error) {
+                // Si ocurrió un error en la asignación
+                Swal.fire('Error', error, 'error');
+            });
+        }
     </script>
 @stop

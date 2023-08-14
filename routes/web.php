@@ -37,6 +37,10 @@ Route::get('pedidos/getpedidosruta', [pedidosController::class, 'getpedidosruta'
 Route::get('pedidos/repartidoresname', [pedidosController::class, 'repartidoresname']);
 Route::get('pedidos/getpedidospercances', [pedidosController::class, 'getpedidospercances']);
 Route::get('pedidos/vernota', [pedidosController::class, 'vernota']);
+Route::get('pedidos/asignarrepartidorback', [pedidosController::class, 'asignarrepartidorback']);
+Route::get('pedidos/aux1', [pedidosController::class, 'aux1']);
+Route::get('pedidos/aux2', [pedidosController::class, 'aux2']);
+Route::get('pedidos/aux3', [pedidosController::class, 'aux3']);
 
 
 // historico
