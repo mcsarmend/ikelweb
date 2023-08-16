@@ -24,8 +24,22 @@
     <link rel="stylesheet" href="/css/ap.css">
     <style>
         /* Estilos adicionales para el texto debajo del navbar */
-        .content {
-            padding: 20px;
+        .container {
+            margin-top: 50px;
+        }
+
+        .list-group-item {
+            padding: 12px;
+            border: 10px solid #9ec3dc;
+        }
+
+        .csspedido {
+            color: #78a729;
+            font-size: 24px;
+        }
+
+        #map {
+            height: 400px;
         }
     </style>
 @stop
@@ -79,7 +93,7 @@
             $('#search-input').on('input', function() {
                 var searchTerm = $(this).val().toLowerCase();
                 var filteredPedidos = pedidos.filter(function(pedido) {
-                    return pedido.numero.toLowerCase().includes(searchTerm);
+                    return pedido.pedido.toLowerCase().includes(searchTerm);
                 });
                 generarLista(filteredPedidos);
             });
@@ -88,7 +102,7 @@
 
         function vernota(pedido) {
             console.log(pedido);
-
+        
             $.ajax({
                 url: "vernota",
                 method: "GET",
@@ -97,34 +111,37 @@
                     "pedido": pedido.toString()
                 },
                 success: function(data) {
-                    if(data.length ==0){
+                    if (data.length === 0) {
                         Swal.fire({
-                        title: 'Nota del repartidor',
-                        text: "El repartidor no añadio notas a esta entrega",
-                        showClass: {
-                            popup: 'animate__animated animate__fadeInDown'
-                        },
-                        hideClass: {
-                            popup: 'animate__animated animate__fadeOutUp'
+                            title: 'Nota del repartidor',
+                            text: "El repartidor no añadió notas a esta entrega",
+                            showClass: {
+                                popup: 'animate__animated animate__fadeInDown'
+                            },
+                            hideClass: {
+                                popup: 'animate__animated animate__fadeOutUp'
+                            }
+                        });
+                    } else {
+                        let notesText = '';
+                        for (const noteObj of data) {
+                            notesText += '• ' + noteObj.note + '<br>'; // Agrega la nota con viñeta
                         }
-                    })
-                    }else{
                         Swal.fire({
-                        title: 'Nota del repartidor',
-                        text: data[0].note,
-                        showClass: {
-                            popup: 'animate__animated animate__fadeInDown'
-                        },
-                        hideClass: {
-                            popup: 'animate__animated animate__fadeOutUp'
-                        }
-                    })
+                            title: 'Notas del repartidor',
+                            html: notesText, // Usa html para mostrar el contenido con viñetas
+                            showClass: {
+                                popup: 'animate__animated animate__fadeInDown'
+                            },
+                            hideClass: {
+                                popup: 'animate__animated animate__fadeOutUp'
+                            }
+                        });
                     }
-
-
-
                 }
             });
         }
+
+
     </script>
 @stop

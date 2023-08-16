@@ -73,10 +73,8 @@
                     var contacto = $('<div style = "color:#6da6cb">').text('Contacto: ' + pedido.numero +
                         " " + pedido.cliente);
                     // var valida = $('<div style = "color:#6da6cb">').text('Valida: ' + pedido.valida);
-                    var button = $('<button onClick="asignarRepartidor(\'' + pedido.pedido + '\')">')
-                        .addClass('btn btn-primary').text('Asignar');
-                    var button2 = $('<button onClick="verDetalle(\'' + pedido.descripcion + '\', \'' +
-                        pedido.pedido + '\')">').addClass('btn btn-info').text('Ver detalle');
+                    var button = $('<button onClick="asignarRepartidor(\'' + pedido.pedido + '\', \'' + pedido.asg + '\')">').addClass('btn btn-primary').text('Asignar');
+                    var button2 = $('<button onClick="verDetalle(\'' + pedido.descripcion + '\', \'' +pedido.pedido + '\')">').addClass('btn btn-info').text('Ver detalle');
 
                     info.append(pedidoInfo, button2, button);
                     listItem.append(info, fechaHora, direccion, contacto);
@@ -89,7 +87,7 @@
             $('#search-input').on('input', function() {
                 var searchTerm = $(this).val().toLowerCase();
                 var filteredPedidos = pedidos.filter(function(pedido) {
-                    return pedido.numero.toLowerCase().includes(searchTerm);
+                    return pedido.pedido.toLowerCase().includes(searchTerm);
                 });
                 generarLista(filteredPedidos);
             });
@@ -103,7 +101,7 @@
             });
         }
 
-        function asignarRepartidor(pedido) {
+        function asignarRepartidor(pedido,asg) {
             // Realizar la consulta AJAX al backend para obtener la lista de nombres
             $.ajax({
                 url: 'repartidoresname', // Ruta al backend que devuelve la lista de nombres
@@ -120,9 +118,7 @@
                         var listItem = $('<li>').addClass('list-group-item');
                         var repartidor = $('<div style = "color:#78a729">').text('Repartidor: ' +
                             element.name);
-                        var button = $('<button onClick="asignar(\'' + element.id + '\', \'' + pedido +
-                                '\', \'' + element.name + '\')">')
-                            .addClass('btn btn-primary').text('Asignar');
+                        var button = $('<button onClick="asignar(\'' + element.id + '\', \'' + pedido + '\', \'' + element.name + '\', \'' + asg + '\')">').addClass('btn btn-primary').text('Asignar');
                         info.append(repartidor, button);
                         listItem.append(info);
                         namesList.append(listItem);
@@ -164,7 +160,7 @@
         }
 
 
-        function asignar(id, pedido, nombre) {
+        function asignar(id, pedido, nombre,asg) {
 
 
             mensajeHTML = 'Se asignará la orden ' + pedido + ' al repartidor ' + nombre;
@@ -174,36 +170,45 @@
                 html: mensajeHTML,
                 showCancelButton: true,
                 cancelButtonText: 'Cancelar',
-                showLoaderOnConfirm: false,
+                showLoaderOnConfirm: true, // Mostrar un spinner mientras se realiza la petición
                 showConfirmButton: true,
-                confirmButtonText: "Asignar"
+                confirmButtonText: "Asignar",
                 preConfirm: function() {
-
-                    $.ajax({
-                        url: 'asignarrepartidorback', // Ruta al backend que devuelve la lista de nombres
-                        method: 'GET',
-                        dataType: 'json',
-                        success: function(response) {
-                            console.log(response);
-                        }
+                    return new Promise(function(resolve, reject) {
+                        // Realizar la petición AJAX aquí
+                        $.ajax({
+                            url: 'asignarrepartidorback',
+                            type: 'GET', // O GET según tu necesidad
+                            data: {
+                                "iddelivery" :id,
+                                "pedidio":pedido,
+                                "asg":asg
+                            },
+                            success: function(response) {
+                                setTimeout(function() {
+                                  window.location.reload();
+                                }, 3000); //
+                                console.log("Se asignó correctamente");
+                                resolve(); // Resuelve la promesa si la asignación fue exitosa
+                            },
+                            error: function(error) {
+                                console.error("Error en la asignación", error);
+                                reject("Hubo un error en la asignación"); // Rechaza la promesa en caso de error
+                            }
+                        });
                     });
-
-
-
-                    console.log("Se asigno");
                 },
                 allowOutsideClick: false
-            }) then(function(result) {
-                // Si el botón "Asignar" fue clicado
+            }).then(function(result) {
                 if (result.isConfirmed) {
-                    // Aquí puedes mostrar el mensaje de éxito
-                    Swal.fire('Asignación Exitosa', 'La asignación se realizó correctamente.',
-                        'success');
+                    Swal.fire('Asignación Exitosa', 'La asignación se realizó correctamente.', 'success');
                 }
             }).catch(function(error) {
-                // Si ocurrió un error en la asignación
                 Swal.fire('Error', error, 'error');
             });
+
+
+
         }
     </script>
 @stop

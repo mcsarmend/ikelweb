@@ -116,13 +116,32 @@ class AuxController extends Controller
     public function getorders(Request $request)
     {
         $data = DB::table("assignations as a")
-            ->select("o.internal_id", "o.order_description", "o.cost", "o.lat_destiny", "o.lon_destiny", "a.status")
-            ->leftjoin('orders as o', 'a.order_id', '=', 'o.id')
+            ->select(
+                "o.internal_id",
+                "o.order_description",
+                "o.cost",
+                "o.lat_destiny",
+                "o.lon_destiny",
+                "a.status",
+                "cp.latitude as current_latitude",
+                "cp.longitude as current_longitude"
+            )
+            ->leftJoin('orders as o', 'a.order_id', '=', 'o.id')
+            ->leftJoinSub(function ($query) {
+                $query->select('latitude', 'longitude', 'order_id')
+                    ->from('current_positions')
+                    ->orderByDesc('id')
+                    ->limit(1);
+            }, 'cp', function ($join) {
+                $join->on('o.internal_id', '=', 'cp.order_id');
+            })
             ->where("a.user_id", $request->user_id)
             ->get();
+        
         return response([
             'orders' => $data,
         ], 200);
+
     }
     public function setorders(Request $request)
     {
@@ -230,6 +249,8 @@ class AuxController extends Controller
 
         return "Hola1";
     }
+    
+    // empezar viaje
     public function aux2(Request $request)
     {
 
@@ -250,45 +271,34 @@ class AuxController extends Controller
         }
 
     }
+    
+    // terminar viaje
     public function aux3(Request $request)
     {
         try {
+            
+            
+            $order_id = DB::table("orders")
+                ->select("id")
+                ->where("internal_id", $request->order_id)
+                ->orderBy('id', 'desc')
+                ->value('id'); 
+
+            
             // Cambiar del progreso
             DB::update('UPDATE disponibility SET inprogress= ? WHERE user_id = ?', [$request->status, $request->user_id]);
+            
             // Cambiar el estatus de la orden
-            DB::update('UPDATE assignations SET status = ? WHERE status = ? and delivery = ?', [$request->orderstatus, 1, $request->user_id]);
+            DB::update('UPDATE assignations SET status = ? WHERE order_id = ? and delivery = ?', ["0", $order_id, $request->user_id]);
             // Cambiar el estatus del conductor
             DB::update('UPDATE disponibility SET active= ? WHERE user_id = ?', [$request->status, $request->user_id]);
-
-            // Verifica si hay pedidos en cola
-            $order = DB::table("assignations")
-                ->select("order_id")
-                ->where("status", 2)
-                ->orderBy('id', 'desc')
-                ->get();
-
-            $array = json_decode($order, true);
-            $id = $array[0]["order_id"];
-
-            if (count($array) > 0) {
-                // Cambiar estatus del conductor
-                DB::update('UPDATE disponibility SET active = ? WHERE user_id = ?', [1, $request->user_id]);
-                DB::update('UPDATE disponibility SET inprogress= ? WHERE user_id = ?', [1, 0]);
-
-                // asignar el conductor a la orden
-                DB::update('UPDATE assignations SET delivery = ? WHERE order_id = ?', [$request->user_id, $id]);
-
-                // Cambiar el estatus de la orden
-                DB::update('UPDATE assignations SET status = ? WHERE order_id = ?', [1, $id]);
-            }
-
             return response()->json([
                 "success" => "Se actualizaron correctamente",
             ]);
         } catch (\Throwable $th) {
             return $th;
             $error = "No se pudo actualizar pedidos";
-            return response()->json(["success" => $error]);
+            return response()->json(["success" => $error . $th]);
         }
     }
 }

@@ -12,7 +12,7 @@
         <h2>Lista de Pedidos</h2>
 
         <div class="form-group">
-            <input id="search-input" type="text" class="form-control" placeholder="Buscar por número de pedido">
+            <input id="search-input" type="text" class="form-control" placeholder="Buscar por n煤mero de pedido">
         </div>
 
         <ul id="pedido-list" class="list-group"></ul>
@@ -23,10 +23,11 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title">Ubicación</h4>
+                        <h4 class="modal-title">Ubicaci贸n</h4>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
                     <div class="modal-body">
+                        <div id="pedido"></div>
                         <div id="map"></div>
                     </div>
                 </div>
@@ -71,6 +72,7 @@
 
     <script>
         $(document).ready(function() {
+            pedidoabierto="";
             pedidos = [];
             $.ajax({
                 url: "getpedidosruta",
@@ -94,15 +96,24 @@
                     var pedidoInfo = $('<div class="csspedido">').html('<strong >Pedido #' + pedido.pedido +
                         '</strong>');
                     var fechaHora = $('<div style = "color:#6da6cb">').text('Fecha: ' + pedido.fecha);
-                    var direccion = $('<div>').text('Dirección: ' + pedido.direccion);
+                    var direccion = $('<div>').text('Direcci贸n: ' + pedido.direccion);
                     var contacto = $('<div style = "color:#6da6cb">').text('Contacto: ' + pedido.numero +
                         " " + pedido.cliente);
                     // var valida = $('<div style = "color:#6da6cb">').text('Valida: ' + pedido.valida);
                     var repartidor = $('<div style = "color:#78a729">').text('Repartidor: ' + pedido
                         .repartidor);
-                    var button = $(
-                        '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mapModal" > '
-                    ).addClass('btn btn-primary').text('Ver');
+                    var button = $('<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mapModal">')
+                                  .addClass('btn btn-primary')
+                                  .text('Ver')
+                                  .on('click', function() {
+                                    // Obtener los valores de latitud y longitud de algún lugar
+                                    var latitud = pedido.latitude;
+                                    var longitud = -pedido.longitude;
+                                    
+                                    // Llamar a la función showmodalmap con los valores de latitud y longitud
+                                    showmodalmap(latitud, longitud);
+                                  });
+
 
                     info.append(pedidoInfo, button);
                     listItem.append(info, fechaHora, direccion, contacto, repartidor);
@@ -122,25 +133,27 @@
 
         });
 
-        function initMap() {
+        function initMap(latitude,longitude) {
+            
             var ubicacion = {
-                lat: 19.650155,
-                lng: -99.201388
+                lat: latitude,
+                lng: longitude
             };
             var map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 12,
+                zoom: 15,
                 center: ubicacion
             });
             var marker = new google.maps.Marker({
                 position: ubicacion,
                 map: map,
-                title: 'Ubicación'
+                title: 'Ubicaci贸n'
             });
         }
-
-        $('#mapModal').on('shown.bs.modal', function() {
-            initMap();
-        });
+        function showmodalmap(latitud, longitud){
+            console.log(latitud, longitud);
+            longitud = longitud*-1;
+            initMap(latitud, longitud);
+        };
 
 
 
